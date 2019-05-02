@@ -1,0 +1,18 @@
+
+Geplant für Version 3.0:
+- Mehrsprachigkeit
+- JavaScript Smileys mittendrin einfügen, nicht nur hinten anfügen
+- Skype, YIM, AIM, Steam, Telegram, Whatsapp usw.
+- Adminbereich
+- In er E-Mail die Möglichkeit geben, einen Eintrag zu löschen oder zu kommentieren
+- $farbe_X -- bessere namen verteilen
+
+UTF-8?
+
+Nachprüfen:
+	Gab es weitere Änderungen in der DMWP/THRS-Fassung?
+	Diese Version 2.x basiert auf Version 1.3 (auf ViathinkSoft veröffentlicht am 26. Dez 2005)
+
+Probleme:
+- Es kommt keine Fehlermeldung wenn die Tabellen nicht existieren!
+
