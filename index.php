@@ -1,20 +1,92 @@
 <?php
 
-# ViaThinkSoft PHP Guestbook 2.8.1
-# (C) 2003-2017 ViaThinkSoft, Daniel Marschall
-# Licensed under GPL v3
+# ViaThinkSoft PHP Guestbook 2.8.2
+# (C) 2003-2022 ViaThinkSoft, Daniel Marschall
+# Licensed under the Apache 2.0 License
 
 // Version des Gästebuchs
 $version = '2.8.1';
+
+// START DEFAULT WERTE
+
+$charset = 'ISO-8859-1';
+
+// Der Titel der Seite
+$seitentitel = 'Mein Gästebuch';
+
+// Seitenkopf
+$seitenkopf = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+
+<head>
+        <meta http-equiv="Content-Type" content="text/html; charset={CHARSET}" />
+	<title>'.htmlentities($seitentitel).' G&auml;stebuch</title>
+</head>
+
+<body>';
+
+// Seitenfuß
+$seitenfuss = '</body></html>';
+
+// Farben
+$farbe1 = '#505080';	// Rand eines Eintrags
+$farbe2 = '#D2DAF0';	// Eintrag Segment 2 (Text) BG
+$farbe3 = '#A0B1E0';	// Eintrag Segment 1 (Kopfzeile) BG
+$farbe4 = '#333333';	// Erstellungsdatum Schrift
+$farbe5 = '#E2E7F5';	// Eintrag Segment 3 (Admin-Kommentar, optional) BG
+$farbe6 = 'red';	// Fehlermeldung
+$farbe7 = 'blue';	// Pflichtfeld-Stern
+$farbe8 = 'green';	// Erfolgsmeldung
+$farbe9  = 'black';	// Segment 1 (Kopfzeile) Text
+$farbe10 = 'black';	// Segment 2 (Text) Text
+$farbe11 = 'black';	// Segment 3 (Admin-Kommentar, optional) Text
+
+// Die MySQL-Zugangsdaten
+$mysql_server   = 'localhost';
+$mysql_user     = 'root';
+$mysql_pass     = '';
+$mysql_database = 'guestbook';
+
+// Die Datenbanktabellennamen
+$table_entries = 'gaestebuch_entries';
+$table_smileys = 'gaestebuch_smileys';
+
+// E-Mail-Adresse
+$adminmail = 'your_email_address@example.com';
+$adminmail_cc = '';
+
+// Einträge pro Seite
+$eintraege_proseite = 10;
+
+// Vorsicht: Der Server muss autorisiert sein, eine E-Mail zu über diese Domain zu senden (SPF/DKIM)
+$cfg_from_email = 'noreply@example.com';
+
+// Features
+$cfg_feature_simple_antispam   = true;
+$cfg_automatisch_freischalten  = false;
+$cfg_unfreigeschaltete_anzegen = false;
+$cfg_vorschau                  = true;
+
+// Recaptcha - This is the most secure Captcha
+// It also helps against "F5" spamming!
+// Get a FREE API key here: https://www.google.com/recaptcha/admin/create
+$cfg_recaptcha_enabled = false;
+$cfg_recaptcha_pubkey  = '';
+$cfg_recaptcha_privkey = '';
+
+// see https://daniel-lange.com/archives/66-ICQ-web-status-icons.html
+$cfg_icq_statusicon = 5;
+
+// ENDE DEFAULT WERTE
 
 if (!file_exists(__DIR__ . '/config/config.inc.php')) {
 	die('ERROR: File <b>config/config.inc.php</b> does not exist. Please create it using <b>config/config.original.inc.php</b>');
 }
 require_once __DIR__ . '/config/config.inc.php';
 
-if (!isset($cfg_recaptcha_enabled)) $cfg_recaptcha_enabled = false;
 if ($cfg_recaptcha_enabled) $cfg_feature_simple_antispam = false;
-if (!isset($cfg_icq_statusicon)) $cfg_icq_statusicon = 5;
 
 require_once __DIR__ . '/includes/database.inc.php';
 verbinden();
@@ -76,8 +148,8 @@ function parse_html($nachricht, $loc_dir = '') {
 
 	// Smiley pre-parsing
 	$uid = uniqid();
-	$result = mysql_query("SELECT `zeichen`, `image`, `beschreibung`, `id` FROM `".mysql_real_escape_string($table_smileys)."` WHERE `enabled` = '1' ORDER BY `id` ASC");
-	while ($row = mysql_fetch_object($result)) {
+	$result = db_query("SELECT `zeichen`, `image`, `beschreibung`, `id` FROM `".db_real_escape_string($table_smileys)."` WHERE `enabled` = '1' ORDER BY `id` ASC");
+	while ($row = db_fetch_object($result)) {
 		# $nachricht = str_replace($row->zeichen, '<img src="images/smileys/'.$row->image.'" alt="'.myhtmlentities($row->beschreibung).'" title="'.myhtmlentities($row->beschreibung).'" />', $nachricht);
 		$nachricht = str_replace($row->zeichen, "\nSMILEY${uid}:".$row->id.":${uid}YELIMS\n", $nachricht);
 	}
@@ -99,8 +171,8 @@ function parse_html($nachricht, $loc_dir = '') {
 	$nachricht = substr($nachricht, 1);
 
 	// Final smiley parsing
-	$result = mysql_query("SELECT `zeichen`, `image`, `beschreibung`, `id` FROM `".mysql_real_escape_string($table_smileys)."` WHERE `enabled` = '1' ORDER BY `id` ASC");
-	while ($row = mysql_fetch_object($result)) {
+	$result = db_query("SELECT `zeichen`, `image`, `beschreibung`, `id` FROM `".db_real_escape_string($table_smileys)."` WHERE `enabled` = '1' ORDER BY `id` ASC");
+	while ($row = db_fetch_object($result)) {
 		$nachricht = str_replace("<br />\nSMILEY${uid}:".$row->id.":${uid}YELIMS<br />\n", '<img src="'.$loc_dir.'images/smileys/'.$row->image.'" alt="'.myhtmlentities($row->beschreibung).'" title="'.myhtmlentities($row->beschreibung).'" />', $nachricht);
 	}
 
@@ -200,17 +272,18 @@ if ($view_freischalten) {
 		die('<p><font color="'.$farbe6.'">Ein Fehler ist aufgetreten. Fehler in den Parametern.</font></p>'.$seitenfuss);
 	}
 
-	$result = mysql_query("SELECT `show`, MD5(`nachricht`) AS `md5` FROM `".mysql_real_escape_string($table_entries)."` WHERE `id` = '".mysql_real_escape_string($id)."'");
-	$row = mysql_fetch_array($result);
-	if ($row['show'] == 1) {
-		echo '<p><font color="'.$farbe8.'">Eintrag ist bereits freigeschaltet!</font></p>';
-	} else {
-		$md5_valid = md5_valid($id, $row['md5']);
-		if (strtolower($md5) == strtolower($md5_valid)) {
-			mysql_query("UPDATE `".mysql_real_escape_string($table_entries)."` SET `show` = '1' WHERE `id` = '".mysql_real_escape_string($id)."'");
-			echo '<p><font color="'.$farbe8.'">Eintrag erfolgreich freigeschaltet!</font></p>';
+	$result = db_query("SELECT `show`, MD5(`nachricht`) AS `md5` FROM `".db_real_escape_string($table_entries)."` WHERE `id` = '".db_real_escape_string($id)."'");
+	if ($row = db_fetch_object($result)) {
+		if ($row->show == 1) {
+			echo '<p><font color="'.$farbe8.'">Eintrag ist bereits freigeschaltet!</font></p>';
 		} else {
-			echo '<p><font color="'.$farbe6.'">Keine Berechtigung, den Eintrag freizuschalten!</font></p>';
+			$md5_valid = md5_valid($id, $row->md5);
+			if (strtolower($md5) == strtolower($md5_valid)) {
+				db_query("UPDATE `".db_real_escape_string($table_entries)."` SET `show` = '1' WHERE `id` = '".db_real_escape_string($id)."'");
+				echo '<p><font color="'.$farbe8.'">Eintrag erfolgreich freigeschaltet!</font></p>';
+			} else {
+				echo '<p><font color="'.$farbe6.'">Keine Berechtigung, den Eintrag freizuschalten!</font></p>';
+			}
 		}
 	}
 
@@ -332,44 +405,44 @@ if (($view_vorschau) || ($view_abschicken)) {
 				echo "<a href=\"javascript:document.frm1.submit()\"><img src=\"images/buttons/abschicken.gif\" border=\"0\" height=\"31\" width=\"146\" alt=\"Abschicken\" title=\"Abschicken\" /></a>";
 				echo "</form>";
 			} else {
-				$daten  = "'".mysql_real_escape_string($name)."'";
+				$daten  = "'".db_real_escape_string($name)."'";
 				$felder = '`name`';
 
 				if ($ort != '') {
-					$daten  .= ", '".mysql_real_escape_string($ort)."'";
+					$daten  .= ", '".db_real_escape_string($ort)."'";
 					$felder .= ', `ort`';
 				}
 
 				if ($email != '') {
-					$daten  .= ", '".mysql_real_escape_string($email)."'";
+					$daten  .= ", '".db_real_escape_string($email)."'";
 					$felder .= ', `email`';
 				}
 
 				if ($homepage != '') {
-					$daten  .= ", '".mysql_real_escape_string($homepage)."'";
+					$daten  .= ", '".db_real_escape_string($homepage)."'";
 					$felder .= ', `homepage`';
 				}
 
 				if ($icq != '') {
-					$daten  .= ", '".mysql_real_escape_string($icq)."'";
+					$daten  .= ", '".db_real_escape_string($icq)."'";
 					$felder .= ', `icq`';
 				}
 
-				$daten  .= ", '".mysql_real_escape_string("$datum $zeit")."'";
+				$daten  .= ", '".db_real_escape_string("$datum $zeit")."'";
 				$felder .= ', `timestamp`';
 
-				$daten  .= ", '".mysql_real_escape_string($ip)."'";
+				$daten  .= ", '".db_real_escape_string($ip)."'";
 				$felder .= ', `ip`';
 
-				$daten  .= ", '".mysql_real_escape_string($nachricht)."'";
+				$daten  .= ", '".db_real_escape_string($nachricht)."'";
 				$felder .= ', `nachricht`';
 
 				$show = $cfg_automatisch_freischalten ? '1' : '0';
-				$daten  .= ", '".mysql_real_escape_string($show)."'";
+				$daten  .= ", '".db_real_escape_string($show)."'";
 				$felder .= ', `show`';
 
-				$result = mysql_query("INSERT INTO `".mysql_real_escape_string($table_entries)."` ($felder) VALUES ($daten)");
-				$id = mysql_insert_id();
+				$result = db_query("INSERT INTO `".db_real_escape_string($table_entries)."` ($felder) VALUES ($daten)");
+				$id = db_insert_id();
 
 				$md5 = md5($nachricht);
 				$md5_valid = md5_valid($id, $md5);
@@ -442,7 +515,7 @@ if (($view_vorschau) || ($view_abschicken)) {
 					$h->addHeader('Reply-To', $email);
 				}
 
-				if ((isset($adminmail_cc)) && ($adminmail_cc != '')) {
+				if ($adminmail_cc != '') {
 					$h->addHeader('CC', $adminmail_cc);
 				}
 
@@ -472,7 +545,7 @@ if (($view_vorschau) || ($view_abschicken)) {
 </div>';
 
 				} else {
-					echo "<p>".mysql_error()."</p>";
+					echo "<p>".db_error()."</p>";
 					echo '<p><font color="'.$farbe6.'">Es ist ein schwerer Fehler aufgetreten. Versuchen Sie es nocheinmal.</font></p>';
 				}
 			}
@@ -489,7 +562,7 @@ if ($relfehler || $view_eintrag) {
 	echo ' Die Eintr&auml;ge werden erst nach einer Pr&uuml;fung ver&ouml;ffentlicht.';
 	echo '</p>';
 
-	if (isset($relfehler)) {
+	if ($relfehler != '') {
 		echo "<p>$relfehler</p>";
 	}
 
@@ -591,8 +664,8 @@ if ($relfehler || $view_eintrag) {
 		// -->
 		</script>';
 
-	$result = mysql_query("SELECT `zeichen`, `image`, `beschreibung` FROM `".mysql_real_escape_string($table_smileys)."` WHERE `enabled` = '1' AND `show_in_editor` = '1' ORDER BY `id` ASC");
-	while ($row = mysql_fetch_object($result)) {
+	$result = db_query("SELECT `zeichen`, `image`, `beschreibung` FROM `".db_real_escape_string($table_smileys)."` WHERE `enabled` = '1' AND `show_in_editor` = '1' ORDER BY `id` ASC");
+	while ($row = db_fetch_object($result)) {
 		echo "<a href=\"javascript:setsmiley(' ".addslashes(myhtmlentities($row->zeichen))." ')\">".
 		'<img src="images/smileys/'.$row->image.'" border="0" alt="'.myhtmlentities($row->beschreibung).'" title="'.myhtmlentities($row->beschreibung).'" /></a>&nbsp;';
 	}
@@ -645,19 +718,19 @@ if ($relfehler || $view_eintrag) {
 
 	$cond = ($cfg_unfreigeschaltete_anzegen) ? '' : " WHERE `show` = '1'";
 
-	$result = mysql_query("SELECT * FROM `".mysql_real_escape_string($table_entries)."`$cond");
-	if ($result) $number = mysql_num_rows($result); else $number = 0;
+	$result = db_query("SELECT * FROM `".db_real_escape_string($table_entries)."`$cond");
+	if ($result) $number = db_num_rows($result); else $number = 0;
 	$max_page = ceil($number / $eintraege_proseite);
 
 	$seiten = isset($_REQUEST['seiten']) ? $_REQUEST['seiten'] : 1;
 	if (!isset($seiten) || ($seiten > $max_page) || ($seiten < 0)) $seiten = '1';
 
-	$result = mysql_query("SELECT * FROM `".mysql_real_escape_string($table_entries)."`$cond ORDER BY `id` DESC LIMIT ".($seiten-1)*$eintraege_proseite.",".$eintraege_proseite);
+	$result = db_query("SELECT * FROM `".db_real_escape_string($table_entries)."`$cond ORDER BY `id` DESC LIMIT ".($seiten-1)*$eintraege_proseite.",".$eintraege_proseite);
 
 	$keineeintraege = true;
 
 	if ($result) {
-		while ($row = mysql_fetch_object($result)) {
+		while ($row = db_fetch_object($result)) {
 			$xry   = explode(' ', $row->timestamp);
 			$datum = $xry[0];
 			$zeit  = $xry[1];

@@ -19,9 +19,9 @@ foreach ($queries as $query) {
 	if (substr($query, 0, 2) == '--') continue;
 	$query .= ';';
 
-	mysql_query($query);
+	db_query($query);
 
-	$err = mysql_error();
+	$err = db_error();
 	if ($err) {
 		fwrite(STDERR, "mySQL error $err at query $query\n\n");
 	}
