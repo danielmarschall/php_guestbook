@@ -5,7 +5,7 @@
 # Licensed under the Apache 2.0 License
 
 // Version des Gästebuchs
-$version = '2.8.1';
+$version = '2.8.2';
 
 // START DEFAULT WERTE
 
