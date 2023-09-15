@@ -1,7 +1,7 @@
 <?php
 
-# ViaThinkSoft PHP Guestbook 2.8.2
-# (C) 2003-2022 ViaThinkSoft, Daniel Marschall
+# ViaThinkSoft PHP Guestbook 2.8.3
+# (C) 2003-2023 ViaThinkSoft, Daniel Marschall
 # Licensed under the Apache 2.0 License
 
 // Version des Gästebuchs
@@ -151,7 +151,7 @@ function parse_html($nachricht, $loc_dir = '') {
 	$result = db_query("SELECT `zeichen`, `image`, `beschreibung`, `id` FROM `".db_real_escape_string($table_smileys)."` WHERE `enabled` = '1' ORDER BY `id` ASC");
 	while ($row = db_fetch_object($result)) {
 		# $nachricht = str_replace($row->zeichen, '<img src="images/smileys/'.$row->image.'" alt="'.myhtmlentities($row->beschreibung).'" title="'.myhtmlentities($row->beschreibung).'" />', $nachricht);
-		$nachricht = str_replace($row->zeichen, "\nSMILEY${uid}:".$row->id.":${uid}YELIMS\n", $nachricht);
+		$nachricht = str_replace($row->zeichen, "\nSMILEY{$uid}:".$row->id.":{$uid}YELIMS\n", $nachricht);
 	}
 
 	// HTML Parsing
@@ -173,7 +173,7 @@ function parse_html($nachricht, $loc_dir = '') {
 	// Final smiley parsing
 	$result = db_query("SELECT `zeichen`, `image`, `beschreibung`, `id` FROM `".db_real_escape_string($table_smileys)."` WHERE `enabled` = '1' ORDER BY `id` ASC");
 	while ($row = db_fetch_object($result)) {
-		$nachricht = str_replace("<br />\nSMILEY${uid}:".$row->id.":${uid}YELIMS<br />\n", '<img src="'.$loc_dir.'images/smileys/'.$row->image.'" alt="'.myhtmlentities($row->beschreibung).'" title="'.myhtmlentities($row->beschreibung).'" />', $nachricht);
+		$nachricht = str_replace("<br />\nSMILEY{$uid}:".$row->id.":{$uid}YELIMS<br />\n", '<img src="'.$loc_dir.'images/smileys/'.$row->image.'" alt="'.myhtmlentities($row->beschreibung).'" title="'.myhtmlentities($row->beschreibung).'" />', $nachricht);
 	}
 
 	return $nachricht;
