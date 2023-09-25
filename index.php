@@ -722,8 +722,9 @@ if ($relfehler || $view_eintrag) {
 	if ($result) $number = db_num_rows($result); else $number = 0;
 	$max_page = ceil($number / $eintraege_proseite);
 
-	$seiten = isset($_REQUEST['seiten']) ? $_REQUEST['seiten'] : 1;
-	if (!isset($seiten) || ($seiten > $max_page) || ($seiten < 0)) $seiten = '1';
+	$seiten = $_REQUEST['seiten'] ?? '1';
+	$seiten = preg_replace('@[^0-9]@', '', $seiten);
+	if (($seiten > $max_page) || ($seiten < 0)) $seiten = '1';
 
 	$result = db_query("SELECT * FROM `".db_real_escape_string($table_entries)."`$cond ORDER BY `id` DESC LIMIT ".($seiten-1)*$eintraege_proseite.",".$eintraege_proseite);
 
