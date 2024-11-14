@@ -1,11 +1,11 @@
 <?php
 
-# ViaThinkSoft PHP Guestbook 2.9
+# ViaThinkSoft PHP Guestbook 2.9.1
 # (C) 2003-2024 ViaThinkSoft, Daniel Marschall
 # Licensed under the Apache 2.0 License
 
 // Version des Gästebuchs
-$version = '2.9';
+$version = '2.9.1';
 
 // START DEFAULT WERTE
 
@@ -75,9 +75,6 @@ $cfg_vorschau                  = true;
 $cfg_recaptcha_enabled = false;
 $cfg_recaptcha_pubkey  = '';
 $cfg_recaptcha_privkey = '';
-
-// see https://daniel-lange.com/archives/66-ICQ-web-status-icons.html
-$cfg_icq_statusicon = 5;
 
 // ENDE DEFAULT WERTE
 
@@ -179,8 +176,8 @@ function parse_html($nachricht, $loc_dir = '') {
 	return $nachricht;
 }
 
-function anznachricht($name, $ort, $email, $home, $icq, $nachricht, $kommentar, $zeit, $datum) {
-	global $farbe1, $farbe2, $farbe3, $farbe4, $farbe5, $farbe6, $farbe7, $farbe8, $farbe9, $farbe10, $farbe11, $this_dir, $cfg_icq_statusicon;
+function anznachricht($name, $ort, $email, $home, $nachricht, $kommentar, $zeit, $datum) {
+	global $farbe1, $farbe2, $farbe3, $farbe4, $farbe5, $farbe6, $farbe7, $farbe8, $farbe9, $farbe10, $farbe11, $this_dir;
 
 	$zzeit = explode(":", $zeit);
 	$zzeit = $zzeit[0].".".$zzeit[1];
@@ -203,9 +200,6 @@ function anznachricht($name, $ort, $email, $home, $icq, $nachricht, $kommentar, 
 	}
 	if ($home != '') {
 		echo '	    <a href="'.myhtmlentities($home).'" target="_blank"><img src="images/homepage.gif" border="0" height="18" width="16" alt="Homepage" title="Homepage" /></a>';
-	}
-	if ($icq != '') {
-		echo '	    <a href="https://icq.com/people/'.urlencode($icq).'" target="_blank"><img src="https://status.icq.com/online.gif?icq='.urlencode($icq).'&amp;img='.$cfg_icq_statusicon.'" alt="Mein ICQ Status" title="Mein ICQ Status" border="0"></a></a>';
 	}
 	echo '</td></tr></table></td></tr>';
 	echo '<tr><td width="100%" bgcolor="'.$farbe2.'" style="color:'.$farbe10.'" align="left">'.$nachricht.'<br /><br /><font size="2" color="'.$farbe4.'">Dieser Eintrag wurde am '.$ddatum.' um '.$zzeit.' Uhr erstellt.</font></td></tr>';
@@ -231,7 +225,6 @@ echo $seitenkopf;
 // Vor der Vorschau alles prüfen
 $err_name      = false;
 $err_nachricht = false;
-$err_icq       = false;
 $err_email     = false;
 $err_homepage  = false;
 $err_antispam  = false;
@@ -246,16 +239,15 @@ $name      = (isset($_POST['name'])      ? trim($_POST['name'])      : '');
 $ort       = (isset($_POST['ort'])       ? trim($_POST['ort'])       : '');
 $email     = (isset($_POST['email'])     ? trim($_POST['email'])     : '');
 $homepage  = (isset($_POST['homepage'])  ? trim($_POST['homepage'])  : '');
-$icq       = (isset($_POST['icq'])       ? trim($_POST['icq'])       : '');
 $nachricht = (isset($_POST['nachricht']) ? trim($_POST['nachricht']) : '');
 $antispam  = (isset($_POST['antispam'])  ? trim($_POST['antispam'])  : '');
 $kommentar = '';
 
-$icq = str_replace('-', '', $icq); // XXX-XXX-XXX -> XXXXXXXXX
-
 # -----------------------------------
 
 function md5_valid($id, $md5_message) {
+	// TODO: solve using hash_hmac and a secret in the configuration or database. the message is not a secret,
+	// since it can be controlled by a spammer!
 	global $table_entries;
 	return md5($table_entries.'-'.$id.'-'.$md5_message.'-GBINT');
 }
@@ -302,9 +294,6 @@ if (($view_vorschau) || ($view_abschicken)) {
 	// Nachricht prüfen
 	if ($nachricht == '') $err_nachricht = true;
 
-	// ICQ prüfen, wenn angegeben
-	if ((!preg_match('/^[0-9]+$/', $icq)) && ($icq != '')) $err_icq = true;
-
 	// E-Mail-Adresse prüfen, wenn angegeben
 	if ((!preg_match('/^[a-z0-9\.\-_\+]+@[a-z0-9\-_]+\.([a-z0-9\-_]+\.)*?[a-z]+$/is', $email)) && ($email != '')) $err_email = true;
 
@@ -322,7 +311,7 @@ if (($view_vorschau) || ($view_abschicken)) {
 	if (($cfg_feature_simple_antispam) && ($antispam != $antispam_awaiting)) $err_antispam = true;
 
 	// Fehler?
-	if (($err_name) || ($err_nachricht) || ($err_icq) || ($err_email) || ($err_homepage) || ($err_antispam)) {
+	if (($err_name) || ($err_nachricht) || ($err_email) || ($err_homepage) || ($err_antispam)) {
 		$relfehler = '<font color="'.$farbe6.'"><u>Fehler</u>: Es wurden nicht alle Pflichtfelder ausgef&uuml;llt oder einige Felder enthalten einen Fehler!</font>';
 	}
 
@@ -337,7 +326,7 @@ if (($view_vorschau) || ($view_abschicken)) {
 			echo '<h1>G&auml;stebucheintrag Vorschau</h1>';
 			echo '<div align="center">';
 
-			anznachricht($name, $ort, $email, $homepage, $icq, $nachricht, $kommentar, $zeit, $datum);
+			anznachricht($name, $ort, $email, $homepage, $nachricht, $kommentar, $zeit, $datum);
 
 			echo "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr>\n";
 
@@ -348,7 +337,6 @@ if (($view_vorschau) || ($view_abschicken)) {
 			echo "<input type=\"hidden\" name=\"ort\" value=\"".myhtmlentities($ort)."\" />\n";
 			echo "<input type=\"hidden\" name=\"email\" value=\"".myhtmlentities($email)."\" />\n";
 			echo "<input type=\"hidden\" name=\"homepage\" value=\"".myhtmlentities($homepage)."\" />\n";
-			echo "<input type=\"hidden\" name=\"icq\" value=\"".myhtmlentities($icq)."\" />\n";
 			echo "<input type=\"hidden\" name=\"nachricht\" value=\"".myhtmlentities($nachricht)."\" />\n";
 			if ($cfg_feature_simple_antispam) echo "<input type=\"hidden\" name=\"antispam\" value=\"".myhtmlentities($antispam)."\" />\n";
 			echo "<a href=\"javascript:document.frm2.submit()\"><img src=\"images/buttons/aendern.gif\" border=\"0\" height=\"31\" width=\"146\" alt=\"&Auml;ndern\" title=\"&Auml;ndern\" /></a>";
@@ -364,7 +352,6 @@ if (($view_vorschau) || ($view_abschicken)) {
 			echo "<input type=\"hidden\" name=\"ort\" value=\"".myhtmlentities($ort)."\" />\n";
 			echo "<input type=\"hidden\" name=\"email\" value=\"".myhtmlentities($email)."\" />\n";
 			echo "<input type=\"hidden\" name=\"homepage\" value=\"".myhtmlentities($homepage)."\" />\n";
-			echo "<input type=\"hidden\" name=\"icq\" value=\"".myhtmlentities($icq)."\" />\n";
 			echo "<input type=\"hidden\" name=\"nachricht\" value=\"".myhtmlentities($nachricht)."\" />\n";
 			if ($cfg_feature_simple_antispam) echo "<input type=\"hidden\" name=\"antispam\" value=\"".myhtmlentities($antispam)."\" />\n";
 			echo "<a href=\"javascript:document.frm1.submit()\"><img src=\"images/buttons/abschicken.gif\" border=\"0\" height=\"31\" width=\"146\" alt=\"Abschicken\" title=\"Abschicken\" /></a>";
@@ -399,7 +386,6 @@ if (($view_vorschau) || ($view_abschicken)) {
 				echo "<input type=\"hidden\" name=\"ort\" value=\"".myhtmlentities($ort)."\" />\n";
 				echo "<input type=\"hidden\" name=\"email\" value=\"".myhtmlentities($email)."\" />\n";
 				echo "<input type=\"hidden\" name=\"homepage\" value=\"".myhtmlentities($homepage)."\" />\n";
-				echo "<input type=\"hidden\" name=\"icq\" value=\"".myhtmlentities($icq)."\" />\n";
 				echo "<input type=\"hidden\" name=\"nachricht\" value=\"".myhtmlentities($nachricht)."\" />\n";
 				if ($cfg_feature_simple_antispam) echo "<input type=\"hidden\" name=\"antispam\" value=\"".myhtmlentities($antispam)."\" />\n";
 				echo "<a href=\"javascript:document.frm1.submit()\"><img src=\"images/buttons/abschicken.gif\" border=\"0\" height=\"31\" width=\"146\" alt=\"Abschicken\" title=\"Abschicken\" /></a>";
@@ -421,11 +407,6 @@ if (($view_vorschau) || ($view_abschicken)) {
 				if ($homepage != '') {
 					$daten  .= ", '".db_real_escape_string($homepage)."'";
 					$felder .= ', `homepage`';
-				}
-
-				if ($icq != '') {
-					$daten  .= ", '".db_real_escape_string($icq)."'";
-					$felder .= ', `icq`';
 				}
 
 				$daten  .= ", '".db_real_escape_string("$datum $zeit")."'";
@@ -456,7 +437,6 @@ if (($view_vorschau) || ($view_abschicken)) {
 				$msg_html .= "<b>E-Mail:</b> ".myhtmlentities($email)."<br />\n";
 				$msg_html .= "<b>Ort:</b> ".myhtmlentities($ort)."<br />\n";
 				$msg_html .= "<b>Homepage:</b> ".myhtmlentities($homepage)."<br />\n";
-				$msg_html .= "<b>ICQ:</b> ".myhtmlentities($icq)."<br />\n";
 				$msg_html .= "<b>Datum:</b> $ger_datum<br />\n";
 				$msg_html .= "<b>Uhrzeit:</b> $zeit<br />\n";
 				$msg_html .= "<br />\n";
@@ -478,7 +458,6 @@ if (($view_vorschau) || ($view_abschicken)) {
 				$msg_plain .= "E-Mail: $email\n";
 				$msg_plain .= "Ort: $ort\n";
 				$msg_plain .= "Homepage: $homepage\n";
-				$msg_plain .= "ICQ: $icq\n";
 				$msg_plain .= "Datum: $ger_datum\n";
 				$msg_plain .= "Uhrzeit: $zeit\n";
 				$msg_plain .= "\n";
@@ -617,19 +596,6 @@ if ($relfehler || $view_eintrag) {
 			<td><input maxlength="40" size="66" name="homepage" value="'.$homepage.'" /></td>
 		</tr>
 		<tr>
-			<td align="right">';
-
-	if ($err_icq) {
-		echo '<font color="'.$farbe6.'">ICQ:</font>';
-	} else {
-		echo 'ICQ:';
-	}
-
-	echo '</td>
-			<td><img src="images/spacer.gif" height="1" width="10" alt="" /></td>
-			<td><input maxlength="40" size="66" name="icq" value="'.$icq.'" /></td>
-		</tr>
-		<tr>
 			<td colspan="3">&nbsp;</td>
 		</tr>';
 
@@ -735,7 +701,7 @@ if ($relfehler || $view_eintrag) {
 			$xry   = explode(' ', $row->timestamp);
 			$datum = $xry[0];
 			$zeit  = $xry[1];
-			anznachricht($row->name, $row->ort, $row->email, $row->homepage, $row->icq, $row->nachricht, $row->kommentar, $zeit, $datum);
+			anznachricht($row->name, $row->ort, $row->email, $row->homepage, $row->nachricht, $row->kommentar, $zeit, $datum);
 			$keineeintraege = false;
 		}
 	}

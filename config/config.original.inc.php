@@ -68,6 +68,3 @@ $cfg_vorschau                  = true;
 $cfg_recaptcha_enabled = false;
 $cfg_recaptcha_pubkey  = '';
 $cfg_recaptcha_privkey = '';
-
-// see https://daniel-lange.com/archives/66-ICQ-web-status-icons.html
-$cfg_icq_statusicon = 5;

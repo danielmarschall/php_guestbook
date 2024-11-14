@@ -8,7 +8,6 @@ CREATE TABLE `gaestebuch_entries` (
   `ort` varchar(80) default NULL,
   `email` varchar(80) default NULL,
   `homepage` varchar(80) default NULL,
-  `icq` varchar(80) default NULL,
   `timestamp` datetime NOT NULL default '0000-00-00 00:00:00',
   `ip` varchar(39),
   `nachricht` text NOT NULL,
