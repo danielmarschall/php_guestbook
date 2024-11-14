@@ -5,7 +5,7 @@
 # Licensed under the Apache 2.0 License
 
 // Version des Gästebuchs
-$version = '2.8.3';
+$version = '2.9';
 
 // START DEFAULT WERTE
 
@@ -724,9 +724,9 @@ if ($relfehler || $view_eintrag) {
 
 	$seiten = $_REQUEST['seiten'] ?? '1';
 	$seiten = preg_replace('@[^0-9]@', '', $seiten);
-	if (($seiten > $max_page) || ($seiten < 0)) $seiten = '1';
+	if (((int)$seiten > $max_page) || ((int)$seiten < 0)) $seiten = '1';
 
-	$result = db_query("SELECT * FROM `".db_real_escape_string($table_entries)."`$cond ORDER BY `id` DESC LIMIT ".($seiten-1)*$eintraege_proseite.",".$eintraege_proseite);
+	$result = db_query("SELECT * FROM `".db_real_escape_string($table_entries)."`$cond ORDER BY `id` DESC LIMIT ".((int)$seiten-1)*$eintraege_proseite.",".$eintraege_proseite);
 
 	$keineeintraege = true;
 
@@ -747,7 +747,7 @@ if ($relfehler || $view_eintrag) {
 	if ((!$keineeintraege) && ($max_page != 1)) {
 		echo '<table cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td align="center"><p class="klein2">Seite: ';
 		for ($i=1; $i<=$max_page; $i++) {
-			if ($seiten != $i) {
+			if ((int)$seiten != $i) {
 				echo "<a href=\"$inphp?seiten=$i\">[$i]</a>\n";
 			} else {
 				echo "<b>[$i]</b>\n";
