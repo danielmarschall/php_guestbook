@@ -1,7 +1,7 @@
 <?php
 
-# ViaThinkSoft PHP Guestbook 2.8.3
-# (C) 2003-2023 ViaThinkSoft, Daniel Marschall
+# ViaThinkSoft PHP Guestbook 2.9
+# (C) 2003-2024 ViaThinkSoft, Daniel Marschall
 # Licensed under the Apache 2.0 License
 
 // Version des Gästebuchs
@@ -272,12 +272,12 @@ if ($view_freischalten) {
 		die('<p><font color="'.$farbe6.'">Ein Fehler ist aufgetreten. Fehler in den Parametern.</font></p>'.$seitenfuss);
 	}
 
-	$result = db_query("SELECT `show`, MD5(`nachricht`) AS `md5` FROM `".db_real_escape_string($table_entries)."` WHERE `id` = '".db_real_escape_string($id)."'");
+	$result = db_query("SELECT `show`, `nachricht` FROM `".db_real_escape_string($table_entries)."` WHERE `id` = '".db_real_escape_string($id)."'");
 	if ($row = db_fetch_object($result)) {
 		if ($row->show == 1) {
 			echo '<p><font color="'.$farbe8.'">Eintrag ist bereits freigeschaltet!</font></p>';
 		} else {
-			$md5_valid = md5_valid($id, $row->md5);
+			$md5_valid = md5_valid($id, md5($row->nachricht));
 			if (strtolower($md5) == strtolower($md5_valid)) {
 				db_query("UPDATE `".db_real_escape_string($table_entries)."` SET `show` = '1' WHERE `id` = '".db_real_escape_string($id)."'");
 				echo '<p><font color="'.$farbe8.'">Eintrag erfolgreich freigeschaltet!</font></p>';
